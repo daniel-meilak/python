@@ -34,12 +34,12 @@ def residual(param,x,y,r):
             for i in range(0,101,1):
                 # find ti in data set j, rescaled to data set p
                 t_s[i] = ((r[j]/r[p])**(1/nu))*t[i]
-                
+
                 # temperature points of rescaled t_p must lie in range t_j
                 if t[0] <= t_s[i] <= t[100]:
 
                     term1 = (r[j]**(beta/nu))*y[j][i]
-                    term2 = (r[p]**(beta/nu))*curve(t_s[i]) 
+                    term2 = (r[p]**(beta/nu))*curve(t_s[i])
                     summ[i] += abs(term1-term2)
                     N = N + 1
 
@@ -48,7 +48,7 @@ def residual(param,x,y,r):
 
 # set up list for points of all plots
 # vector of plots to use (from 0-15)
-cols = np.array([13,14],dtype=int)
+cols = np.array([10,14],dtype=int)
 num_plots = cols.size
 
 y=np.zeros(shape=(num_plots,102))
@@ -69,11 +69,11 @@ r = y[:,0]
 y = np.delete(y,0,1)
 
 # optimize values of beta and nu by using least squares fit
-beta      = 0.641
+beta      = 0.525
 nu        = 1.0
 Tc        = 856.67
 param   = np.array([beta,nu,Tc])
-optimal = least_squares(residual,param,args=(x,y,r),verbose=2,bounds=([0.1,0.5,500.0],[2.0,2.0,1000]))
+optimal = least_squares(residual,param,args=(x,y,r),verbose=2,bounds=([0.0,0.0,845.0],[np.inf,1.0,865.0])) #
 print('Optimized parameters:')
 print('Beta=',optimal.x[0])
 print('Nu=',optimal.x[1])

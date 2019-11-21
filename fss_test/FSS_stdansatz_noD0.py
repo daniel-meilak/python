@@ -6,7 +6,8 @@
 ###############################################################################
 
 from numpy import *
-import pylab as py
+import tkinter
+import matplotlib.pyplot as py
 import scipy.interpolate as scii
 import scipy.optimize as scio
 
@@ -57,13 +58,13 @@ class Fitpar:
       return [y, x]
 
    def print_values(self):
-      print 'Tc: ', self.Tc, \
-            '+/-', '(', self.Tc_errpl, '/', self.Tc_errmi, ')'
-      print 'nu: ', self.nu, \
-            '+/-', '(', self.nu_errpl, '/', self.nu_errmi, ')'
-      print 'beta: ', self.beta, \
-            '+/-', '(', self.beta_errpl, '/', self.beta_errmi, ')'
-      print 'pb_optim: ', self.pb_optim
+      print('Tc: ', self.Tc, \
+            '+/-', '(', self.Tc_errpl, '/', self.Tc_errmi, ')')
+      print('nu: ', self.nu, \
+            '+/-', '(', self.nu_errpl, '/', self.nu_errmi, ')')
+      print('beta: ', self.beta, \
+            '+/-', '(', self.beta_errpl, '/', self.beta_errmi, ')')
+      print('pb_optim: ', self.pb_optim)
 
 ######################  end class Fitpar ######################################
 
@@ -86,11 +87,11 @@ class Bundle:
       Read in the M vs. T data, such that the lowest index is the largest value.
       """
 
-      skiprows_first = 30
-      skiprows_last = 20
+      #skiprows_first = 30
+      #skiprows_last = 20
 
-      #skiprows_first = 1
-      #skiprows_last = 1
+      skiprows_first = 30
+      skiprows_last = 10
 
       self.mat = loadtxt(filename, skiprows=skiprows_first)
       ln = len(self.mat[:,0])-skiprows_last
@@ -130,7 +131,6 @@ def xinterp_range(b, bI, fitpars):
    [yI, xI] = fitpars.scaling_function(bI)
    x_common_min = max(min(x), min(xI))
    x_common_max = min(max(x), max(xI))
-   boolean = (x>=x_common_min) & (x<=x_common_max)
    x_common = x[(x>=x_common_min) & (x<=x_common_max)]
    y_common = y[(x>=x_common_min) & (x<=x_common_max)]
    return [y_common, x_common]
@@ -158,14 +158,14 @@ def error_func(inter_dat, fitpars, size_array):
    if fit_mode == 'full_range':
       pb2 = 0.0 #sum of residuals
       for size_indx1 in range(len(size_array)): # no-interpolated data index
-         b1 = bundles[size_indx1]
+         b1 = bundles[size_indx1] # a set of x1,y1
          for size_indx2 in range(len(size_array)): # interpolated data index
             if (size_indx1 != size_indx2): # exclude b1 = b2
                b2 = bundles[size_indx2]
                yx = xinterp_range(b1,b2,fitpars)
                if len(yx[1]) > 1:
-                   pb2 = pb2 + sum((yx[0] - \
-                         inter_dat[size_indx2](yx[1]))**2) # Eq. 2
+
+                   pb2 = pb2 + sum((yx[0] - inter_dat[size_indx2](yx[1]))**2) # Eq. 2
                else:
                    pb2 = -100.0 # set unrealistic large number
       return pb2
@@ -197,10 +197,9 @@ def fit_data(fitpars, size_array):
    fit!
    """
 
-   p0 = fitpars.par_array
-   p1 = scio.fmin(min_func, p0,(fitpars, size_array),
-                  maxiter=10000, maxfun=10000, disp=0)
-   fitpars.update_fitparam(p1)
+   p0 = fitpars.par_array # array of initial fitting parameters [T0,nu0,beta0]
+   p1 = scio.fmin(min_func, p0,(fitpars, size_array),maxiter=10000, maxfun=10000, disp=0) # fit parameters using scipy.optimize.fmin()
+   fitpars.update_fitparam(p1) # after fitting, save updated parameters
    return p1
 
 def get_errorbars(fitpars_optim, eta, size_array):
@@ -247,17 +246,15 @@ def plot_collapse(fitpars, size_array):
    Plots collapses based on the best critical exponents
    """
    for size_indx in range(len(size_array)):
-      b = bundles[size_indx]
-      [y, x] = fitpars.scaling_function(b)
-      for i in range(len(x)):
-         print size_indx, '\t', x[i], '\t', y[i]
+      b = bundles[size_indx] # creates arrays of x,y sets
+      [y, x] = fitpars.scaling_function(b) # scales original data with new exponents
+
       py.plot(x,y,'o')
-      py.hold('on')
 
    py.xlabel('$L^{1/\\nu}(T-T_C)/T_C$', fontsize = 20)
    py.ylabel('$L^{\\beta/\\nu}(M/M_S)$', fontsize = 20)
-   py.title('Short-range FePt Hamiltonian')
-   py.axis([-18, 11, -0.1, 1.7])
+   #py.title('Short-range FePt Hamiltonian')
+   #py.axis([-18, 11, -0.1, 1.7])
 
 
 ################################################################################
@@ -267,7 +264,7 @@ def plot_collapse(fitpars, size_array):
 ################################################################################
 
 # avalable values
-size_array = array([2, 3, 4, 5, 6, 7, 8, 9])
+size_array = array([15,16])
 
 # read the input data for scaling
 #py.figure(1)
@@ -275,56 +272,29 @@ size_array = array([2, 3, 4, 5, 6, 7, 8, 9])
 bundles = []
 size_indx = 0
 for size in size_array:
-   filename = './'+str(size)+'nm'
+   filename = './norm/'+str(size)+'nm'
    bundles.append(Bundle(filename, size_indx, size))
    bundles[size_indx].read_data()
    size_indx += 1
 
-# Initialize
-#Tc0_vec = [600.0, 650.0, 700.0, 750.0, 800.0, 850.0, 900.0]
-#nu0_vec = [0.60, 0.80, 0.90]
-#beta0_vec = [0.1, 0.15, 0.2, 0.25, 0.3]
+Tc0   = 850.0
+nu0   = 1.0
+beta0 = 0.55
 
-Tc0_vec = [650.0]
-nu0_vec = [0.8]
-beta0_vec = [0.1]
+p0 = [Tc0, nu0, beta0]
+print(p0)
 
-for i1 in Tc0_vec:
-    for i2 in nu0_vec:
-        for i3 in beta0_vec:
-            Tc0, nu0, beta0 = i1, i2, i3
-            print Tc0, nu0, beta0
-            p0 = []
-            p0.append(Tc0)
-            p0.append(nu0)
-            p0.append(beta0)
+fitpars = Fitpar(p0)
 
-            fitpars = Fitpar(p0)
+# fit!
+p1 = fit_data(fitpars, size_array)
+fitpars.update_fitparam(p1)
+get_errorbars(fitpars, 0.01, size_array)
 
-            # fit!
-            p1 = fit_data(fitpars, size_array)
-            fitpars.update_fitparam(p1)
-            get_errorbars(fitpars, 0.01, size_array)
-
-            print
-            print
+print()
+print()
 
 py.figure(2)
 plot_collapse(fitpars, size_array)
-
-py.figure(3)
-size_array = [2, 3, 4, 5, 6, 7, 8, 9]
-tceff1 = [p1[0]*(1.0-size_array[i]**(-1.0/p1[1])) for i in range(len(size_array))]
-tceff2 = [p1[0]*(1.0+size_array[i]**(-1.0/p1[1]))**(-1.0) for i in range(len(size_array))]
-
-tceff3 = [672.0, 692.0, 701.0, 708.0, 714.0, 718.0, 720.0, 722.0]
-
-
-#for i in range(len(tceff)): print size_array[i], '\t', tceff[i]
-#py.plot(size_array, tceff1,'ko', size_array, tceff2, 'ro', size_array, tceff3, 'bo')
-py.plot(size_array, tceff2, 'ro', size_array, tceff3, 'bo')
-py.axis([1, 10, 200, 800])
-py.xlabel('size [nm]', fontsize = 20)
-py.ylabel('$T_C^{eff}$ [K]', fontsize = 20)
 
 py.show()

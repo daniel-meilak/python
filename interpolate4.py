@@ -17,12 +17,15 @@ def residual(param,x,y,r):
     nu   = param[1]
     Tc   = param[2]
     x    = (x - Tc)/Tc
+    print("Reduced Temp")
+    print(x)
+    exit()
     r    = r.astype(int)
     p_b  = 0
 
     # for each data set p
     for p in range(0,y.shape[0],1):
-        # rescale temperature x_p and magnetization y[p]
+        # rescale temperature x_p and magnetization y_p
         x_p  = r[p]**(1/nu)*x
         y_p = r[p]**(beta/nu)*y[p]
 
@@ -32,7 +35,7 @@ def residual(param,x,y,r):
         # for each data set j from p+1 to max_sets
         for j in range(p+1,y.shape[0],1):
 
-            # rescale temperature x_j and magnetization y[j]
+            # rescale temperature x_j and magnetization y_j
             x_j = r[j]**(1/nu)*x
             y_j = r[j]**(beta/nu)*y[j]
 
@@ -42,6 +45,9 @@ def residual(param,x,y,r):
 
             x_common = x_j[(x_j>=xmin) & (x_j<=xmax)]
             y_common = y_j[(x_j>=xmin) & (x_j<=xmax)]
+
+            print(x_p)
+            exit()
 
             # if using least squares
             #p_b = p_b + abs(y_common - curve(x_common))
@@ -62,7 +68,7 @@ x=np.arange(0,1010,10,dtype=float)
 
 # magentization.txt contains coumnts of temp v magnetization with a header
 # in row 1 which contains the grain size for each data set.
-filename = 'magnetization.txt'
+filename = 'magnetization_norm.txt'
 iter = 0
 for i in np.nditer(cols):
     y[iter] = np.loadtxt(filename,dtype=float,usecols=(i,))
@@ -75,14 +81,14 @@ r = y[:,0]
 y = np.delete(y,0,1)
 
 # normalise magnetization values if required
-normalise = 1 # 1 True, 0 False
+normalise = 0 # 1 True, 0 False
 if normalise:
     for i in range(0,y.shape[0]):
         max = y[i][0]
         y[i] = y[i]/max
 
 # remove values from beginning or end of x and y
-skiprows_first = 50
+skiprows_first = 30
 skiprows_last  = 10
 
 y = np.delete(y, range(0,skiprows_first), 1)

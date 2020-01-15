@@ -19,7 +19,7 @@ def residual(param,x,y,r):
     x    = (x - Tc)/Tc
     print("Reduced Temp")
     print(x)
-    exit()
+    exit() 
     r    = r.astype(int)
     p_b  = 0
 

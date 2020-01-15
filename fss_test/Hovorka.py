@@ -46,9 +46,6 @@ class Fitpar:
       beta = self.beta
 
       t = (b.T-Tc)/Tc
-      print("Reduced Temp")
-      print(t)
-      exit()
       x = (b.size)**(1.0/nu)*(t)
       y = (b.size)**(beta/nu)*b.M
 
